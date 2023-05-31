@@ -1,0 +1,128 @@
+Bitstuffing:
+
+import sys
+from termcolor import colored
+#data = '1101011111010111111010111111101101010111101111101010111111010111'
+
+data=input("Enter the data : ")
+
+print("The data entered is : ",data)
+size=int(input("Enter the size of frame: "))
+delimiter = colored('01111110', "red")
+
+num_fr = len(data)//size
+print("The number of frames the data will be divided into: ", num_fr)
+
+#sender's side
+msg = [[] for i in range(num_fr)]
+final_mes = []
+frame_data = ""
+
+print("The frames divided into payload:")
+for i in range(num_fr):
+        msg[i] = data[i*size:(i+1)*size]
+        print(msg[i], end=' ')
+print()
+print("The starting and ending delimiter: ", delimiter)
+for i in range(num_fr):
+        frame_data = frame_data + msg[i].replace("11111", "111110")
+        frame_data = delimiter + frame_data + delimiter
+        final_mes.append(frame_data)
+        frame_data = ""
+print("The stuffed frames with the flag added:")
+for i in range(num_fr):
+        print(final_mes[i], end = ' ')
+print()
+print("The data that is sent to the receiver:", "".join(final_mes))
+
+rec_framedata = ""
+receive = []
+for i in range(num_fr):
+        rec_framedata = final_mes[i]
+        rec_framedata = rec_framedata.replace('01111110', '')
+        r = rec_framedata.replace('111110',"11111")
+        receive.append(r)
+        rec_framedata = ""
+        r = ""
+
+print("The frames after destuffing:", "".join(receive))
+
+Hamming Code:
+def detectError(arr, nr):
+    n = len(arr)
+    res = 0
+
+    for i in range(nr):
+        val = 0
+        for j in range(1, n + 1):
+            if j & (2**i) == (2**i):
+                val = val ^ int(arr[-1 * j])
+
+        res = res + val*(10**i)
+
+    return int(str(res), 2)
+
+
+print("This Code works on Even parity")
+print("Enter the data to be transferred")
+data = input()
+m = len(data)
+print("The length of the data is", m)
+
+r = 0
+
+for i in range(m):
+    if 2**i >= m + i + 1:
+        r = i
+
+print("The number of redundant bits required is", r)
+
+x = 0
+y = 1
+m = len(data)
+res = ''
+
+for i in range(1, m + r + 1):
+    if i == 2**x:
+        res = res + 'R'
+        x += 1
+    else:
+        res = res + data[-1 * y]
+        y += 1
+
+res = res[::-1]
+
+print("The position of redundant bits is represented by R in:", res)
+
+arr = res
+
+arr = arr.replace("R", "0")
+
+n = len(arr)
+for i in range(r):
+    val = 0
+    for j in range(1, n + 1):
+
+        if j & (2**i) == (2**i):
+            val = val ^ int(arr[-1 * j])
+
+    arr = arr[:n - (2**i)] + str(val) + arr[n - (2**i) + 1:]
+
+print("Data after calculating parity bits is:", arr)
+
+
+print("Enter the receiver side data:")
+recdata = input()
+
+print("Received Data is", recdata)
+
+ans = detectError(recdata, r)
+if ans == 0:
+    print("There is no error in the received message.")
+else:
+    print("There is an error in the received message at position", len(recdata) - ans + 1, "from the left.")
+    print("Correcting the error...")  
+    index = len(recdata) - ans
+    corrected_data = recdata[:index] + str(1 - int(recdata[index])) + recdata[index + 1:]
+    print("Corrected Data:", corrected_data)
+
